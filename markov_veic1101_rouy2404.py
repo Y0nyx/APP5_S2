@@ -54,12 +54,89 @@ import os
 from pathlib import Path
 from random import randint
 from random import choice
+from pythonds3 import Vertex
+from pythonds3.graphs import Graph
 
 ### Ajouter ici les signes de ponctuation Ã  retirer
 PONC = ["!", '"', "'", ")", "(", ",", ".", ";", ":", "?", "-", "_"]
 
 ###  Vous devriez inclure vos classes et mÃ©thodes ici, qui seront appellÃ©es Ã  partir du main
+class Author:
+    def __init__(self, name):
+        self.name = name
+        self.textes = dict()
+        self.frequence = dict()
 
+    def addTexte(self,texte):
+        if texte not in self.textes:
+            self.textes[texte] = dict()
+        return texte
+
+    def frequences(self):
+        nbWord = 0
+        self.frequence = dict()
+        for texte in self.textes.values():
+            for wr in texte:
+                nbWord += texte[wr]
+                if wr in self.frequence:
+                    self.frequence[wr] += texte[wr]
+                else:
+                    self.frequence[wr] = texte[wr]
+### Calcul de la frequence
+        for word in self.frequence:
+            self.frequence[word] = self.frequence[word]/nbWord
+
+
+
+
+
+def lectureFichier(nomFichier,author,texte):
+    fichier = open(nomFichier, encoding='utf-8')
+    for line in fichier:
+        words = line[:-1].split()
+
+        for wr in words:
+            wr_lo = wr.lower()
+            if wr_lo in author.textes[texte]:
+                author.textes[texte][wr_lo] += 1
+            else:
+                author.textes[texte][wr_lo] = 1
+
+def addBucket(d,bucket,word):
+    if bucket in d:
+        d[bucket].append(word)
+    else:
+        d[bucket] = [word]
+
+def enleverPonc(word):
+    for c in PONC:
+        word = word.replace(c, "")
+    return word
+
+def buildGraph(wordFile,n):
+    d = {}
+    g = Graph()
+    wfile = open(wordFile, encoding='utf-8')
+    # create buckets of words that differ by one letter
+    i = 0
+    for line in wfile:
+        words = line[:-1].split()
+        for wr in range(len(words)-n):
+            wr_k = enleverPonc(words[wr+i].lower())
+            wr_values = tuple()
+            for wr_vi in range(1, n, 1):
+                wr_values = wr_values + (enleverPonc(words[wr+wr_vi]).lower())
+            hash_wr_values = hash(wr_values)
+            if wr_k in d:
+                if wr_values in d[wr_k]:
+                    d[wr_k][hash_wr_values][1] += 1
+                else:
+                    d[wr_k][hash_wr_values] = (wr_values,1)
+            else:
+                d[wr_k] = dict()
+                d[wr_k][hash_wr_values] = (wr_values,1)
+
+    return g
 
 ### Main: lecture des paramÃ¨tres et appel des mÃ©thodes appropriÃ©es
 ###
@@ -129,3 +206,18 @@ if __name__ == "__main__":
             print("    " + aut[-1])
 
 ### Ã€ partir d'ici, vous devriez inclure les appels Ã  votre code
+    authorsInfo = dict()
+
+    for a in authors:
+        authorsInfo[a] = Author(a)
+        authorDir = rep_aut + "\\" + a
+        textes = os.listdir(authorDir)
+        # loop pour tous les textes de l'auteur
+        for d in textes:
+            textFile = authorDir + "\\" + d
+            authorsInfo[a].addTexte(d)
+            buildGraph(textFile,2)
+            #lectureFichier(textFile,authorsInfo[a],d)
+        authorsInfo[a].frequences()
+
+    print(authorsInfo[0])

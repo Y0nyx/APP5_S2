@@ -89,9 +89,12 @@ class Author:
         for word in self.frequence:
             self.mFrequence[word] = self.frequence[word]/nbWord
 
-def lectureFichier(nomFichier,author,texte, n):
+def lectureFichier(nomFichier,author,texte, n, ponc):
     txt = open(nomFichier, encoding='utf-8').read()
-    words = enleverPonc(txt.lower()).split()
+    if not ponc:
+        words = enleverPonc(txt.lower()).split()
+    else:
+        words = txt.lower().split()
     if n == 1:
         loopRange = len(words)
     else:
@@ -156,9 +159,8 @@ def textCompare(textToCompareDictFreq, author):
                 nbMot += 1 * author.mFrequence[word]
     print('==========================================')
     print("Auteur: " + author.name + ", ressemblance: ","%.2f%%" % (coll/nbMot*100))
-    return coll/nbMot
 
-def buildMarkovDict(nomAuteur, rep_aut):
+def buildMarkovDict(nomAuteur, rep_aut, ponc):
     authorDir = rep_aut + "\\" + nomAuteur
     textes = os.listdir(authorDir)
     dim1Dict = dict()
@@ -167,7 +169,10 @@ def buildMarkovDict(nomAuteur, rep_aut):
     for d in textes:
         textFile = authorDir + "\\" + d
         txt = open(textFile, encoding='utf-8').read()
-        words = enleverPonc(txt.lower()).split()
+        if not ponc:
+            words = enleverPonc(txt.lower()).split()
+        else:
+            words = txt.lower().split()
         for x in range(len(words)-1):
             wr_current = words[x]
             wr_next = words[x+1]
@@ -203,7 +208,7 @@ def enleverPonc(word):
         word = word.replace(c, " ")
     return word
 
-def buildAuthorInfo(authors,rep_aut,n):
+def buildAuthorInfo(authors,rep_aut,n, ponc):
     authorsInfo = dict()
     for a in authors:
         authorsInfo[a] = Author(a)
@@ -214,18 +219,18 @@ def buildAuthorInfo(authors,rep_aut,n):
             textFile = authorDir + "\\" + d
             authorsInfo[a].addTexte(d)
             # buildGraph(textFile,args.m)
-            lectureFichier(textFile, authorsInfo[a],d,n)
+            lectureFichier(textFile, authorsInfo[a],d,n, ponc)
         authorsInfo[a].frequences()
     return authorsInfo
 
-def auteurEtudier(auteur,fichier,n,F,rep_aut):
+def auteurEtudier(auteur,fichier,n,F,rep_aut, ponc):
     objetAuteur = Author(auteur)
     authorDir = rep_aut + "\\" + auteur
     textes = os.listdir(authorDir)
     for d in textes:
         texteFile = authorDir + "\\" + d
         objetAuteur.addTexte(d)
-        lectureFichier(texteFile, objetAuteur, d, n)
+        lectureFichier(texteFile, objetAuteur, d, n, ponc)
     objetAuteur.frequences()
     texteFreq = textToDictFreq(fichier,n)
 
@@ -329,20 +334,20 @@ if __name__ == "__main__":
 ### Ã€ partir d'ici, vous devriez inclure les appels Ã  votre code
 
     if args.a:
-        auteurEtudier(args.a, args.f,args.m,args.F,rep_aut)
+        auteurEtudier(args.a, args.f,args.m,args.F,rep_aut, args.P)
     if args.A:
-        auteursInfo = buildAuthorInfo(authors,rep_aut,args.m)
+        auteursInfo = buildAuthorInfo(authors,rep_aut,args.m, args.P)
         ComparaisonAuteur(args.f,args.m,args.F,auteursInfo)
 
     if args.G:
         print("markov chain")
         if args.a:
-            markovDictAuteur = buildMarkovDict(args.a, rep_aut)
+            markovDictAuteur = buildMarkovDict(args.a, rep_aut, args.P)
             print(f"Text selon l'auteur {args.a}:")
             buildPhrase(markovDictAuteur, args.G)
         elif args.A:
             for a in authors:
-                markovDictAuteur = buildMarkovDict(a, rep_aut)
+                markovDictAuteur = buildMarkovDict(a, rep_aut, args.P)
                 print(f"{a} :: Début :", end="")
                 buildPhrase(markovDictAuteur, args.G)
                 print(f" :: Fin")

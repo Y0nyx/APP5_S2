@@ -44,7 +44,7 @@
 ###            Format de sortie:  "nom du fichier: auteur"
 ###  avec ou sans -P:  indique que les calculs doivent etre faits avec ou sans ponctuation
 ###  avec -v:  mode verbose, imprimera l'ensemble des valeurs des paramÃ¨tres (fait deja partie du gabarit)
-
+#-f TextesPourEtudiants -m 2 -v
 
 import math
 import argparse
@@ -66,6 +66,7 @@ class Author:
         self.name = name
         self.textes = dict()
         self.frequence = dict()
+        self.mFrequence = dict()
 
     def addTexte(self,texte):
         if texte not in self.textes:
@@ -75,6 +76,7 @@ class Author:
     def frequences(self):
         nbWord = 0
         self.frequence = dict()
+        self.mFrequence = dict()
         for texte in self.textes.values():
             for wr in texte:
                 nbWord += texte[wr]
@@ -84,23 +86,74 @@ class Author:
                     self.frequence[wr] = texte[wr]
 ### Calcul de la frequence
         for word in self.frequence:
-            self.frequence[word] = self.frequence[word]/nbWord
+            self.mFrequence[word] = self.frequence[word]/nbWord
 
 
 
-
-
-def lectureFichier(nomFichier,author,texte):
+def lectureFichier(nomFichier,author,texte, n=1):
     fichier = open(nomFichier, encoding='utf-8')
     for line in fichier:
-        words = line[:-1].split()
-
-        for wr in words:
-            wr_lo = wr.lower()
-            if wr_lo in author.textes[texte]:
-                author.textes[texte][wr_lo] += 1
+        words = enleverPonc(line[:-1]).split()
+        if n == 1:
+            loopRange = len(words)
+        else:
+            loopRange = len(words) - (n-1)
+        for x in range(loopRange):
+            wr = words[x]
+            if len(wr) <= 2:
+                pass
             else:
-                author.textes[texte][wr_lo] = 1
+                if not n == 1:
+                    for y in range(1, n):
+                        wr += words[x+y]
+                wr_lo = wr.lower()
+                if wr_lo in author.textes[texte]:
+                    author.textes[texte][wr_lo] += 1
+                else:
+                    author.textes[texte][wr_lo] = 1
+
+def textToDictFreq(pathTextInconnu, n=1):
+    fichier = open(pathTextInconnu, encoding='utf-8')
+    nbWord = 0
+    wordsTextDict = dict()
+    for line in fichier:
+        words = enleverPonc(line[:-1]).split()
+        if n == 1:
+            loopRange = len(words)
+        else:
+            loopRange = len(words) - (n-1)
+        for x in range(loopRange):
+            wr = words[x]
+            if len(wr) <= 2:
+                pass
+            else:
+                if not n == 1:
+                        for y in range(1,n):
+                            wr += words[x + y]
+                nbWord += 1
+                wr_lo = wr.lower()
+                if wr_lo in wordsTextDict:
+                    wordsTextDict[wr_lo] += 1
+                else:
+                    wordsTextDict[wr_lo] = 1
+
+    for word in wordsTextDict:
+        wordsTextDict[word] = wordsTextDict[word] / nbWord
+
+    return wordsTextDict
+
+def textCompare(textToCompareDictFreq, author):
+    coll = 0
+    nbMot = 0
+    for word in textToCompareDictFreq.keys():
+        if word in author.mFrequence:
+### comparer la frequence
+            if textToCompareDictFreq[word]/author.mFrequence[word] > 0.75:
+                coll += 1 * author.mFrequence[word]
+                nbMot += 1 * author.mFrequence[word]
+            else:
+                nbMot += 1 * author.mFrequence[word]
+    return coll/nbMot
 
 def addBucket(d,bucket,word):
     if bucket in d:
@@ -110,31 +163,27 @@ def addBucket(d,bucket,word):
 
 def enleverPonc(word):
     for c in PONC:
-        word = word.replace(c, "")
+        word = word.replace(c, " ")
     return word
 
 def buildGraph(wordFile,n):
     d = {}
     g = Graph()
+    g.add_edge(1,2,1)
+    if (1,2) in g.get_edges():
+        g.add_edge(1,2,2)
+
+    if (2,1) in g.get_edges():
+        g.add_edge(1,2,3)
     wfile = open(wordFile, encoding='utf-8')
     # create buckets of words that differ by one letter
-    i = 0
     for line in wfile:
         words = line[:-1].split()
-        for wr in range(len(words)-n):
-            wr_k = enleverPonc(words[wr+i].lower())
-            wr_values = tuple()
-            for wr_vi in range(1, n, 1):
-                wr_values = wr_values + (enleverPonc(words[wr+wr_vi]).lower())
-            hash_wr_values = hash(wr_values)
-            if wr_k in d:
-                if wr_values in d[wr_k]:
-                    d[wr_k][hash_wr_values][1] += 1
-                else:
-                    d[wr_k][hash_wr_values] = (wr_values,1)
-            else:
-                d[wr_k] = dict()
-                d[wr_k][hash_wr_values] = (wr_values,1)
+        for wr in range(len(words) - 1):
+            wr_k = enleverPonc(words[wr].lower())
+            wr_values = (enleverPonc(words[wr+1]).lower())
+            g.add_edge(wr_k,wr_values, 2)
+
 
     return g
 
@@ -207,7 +256,8 @@ if __name__ == "__main__":
 
 ### Ã€ partir d'ici, vous devriez inclure les appels Ã  votre code
     authorsInfo = dict()
-
+    textInDictFreq = textToDictFreq("C:\\Users\\iamya\\Documents\\Github\\APP5_S2\\Victor Hugo - Les misérables - Tome I.txt")
+    textInDictFreq2 = textToDictFreq("C:\\Users\\iamya\\Documents\\Github\\APP5_S2\\Jules Verne - Vingt mille lieues sous les mers.txt")
     for a in authors:
         authorsInfo[a] = Author(a)
         authorDir = rep_aut + "\\" + a
@@ -216,8 +266,21 @@ if __name__ == "__main__":
         for d in textes:
             textFile = authorDir + "\\" + d
             authorsInfo[a].addTexte(d)
-            buildGraph(textFile,2)
-            #lectureFichier(textFile,authorsInfo[a],d)
+            #buildGraph(textFile,args.m)
+            lectureFichier(textFile,authorsInfo[a],d)
         authorsInfo[a].frequences()
 
-    print(authorsInfo[0])
+    freqDict = dict()
+    allFreq = 0
+    for a in authors:
+        freqDict[a] = textCompare(textInDictFreq, authorsInfo[a])
+        allFreq += freqDict[a]
+        #textCompare(textInDictFreq2, authorsInfo[a])
+    print("----------------------------------------------")
+    print("Victor Hugo - Les misérables - Tome I.txt -> ")
+    #print("Jules Verne - Vingt mille lieues sous les mers.txt -> ")
+    for a in freqDict:
+        print(f"Auteur: {a} {freqDict[a]/allFreq}")
+    print("----------------------------------------------")
+
+    print("done")

@@ -1,1 +1,5 @@
-
+venv/*
+.idea/APP5_S2.iml
+.idea/misc.xml
+*.xml
+*.iml

@@ -90,29 +90,33 @@ class Author:
 
 
 
-def lectureFichier(nomFichier,author,texte, n=1):
+def lectureFichier(nomFichier,auteur,texte,n):
     fichier = open(nomFichier, encoding='utf-8')
     for line in fichier:
-        words = enleverPonc(line[:-1]).split()
+        mots = enleverPonc(line[:-1]).split()
         if n == 1:
-            loopRange = len(words)
+            loopRange = len(mots)
         else:
-            loopRange = len(words) - (n-1)
+            loopRange = len(mots) - (n-1)
         for x in range(loopRange):
-            wr = words[x]
+            wr = mots[x]
+### enlever les determinants non representatif de la trace de l'auteur
             if len(wr) <= 2:
                 pass
             else:
                 if not n == 1:
+### Creer un string de n gramme
                     for y in range(1, n):
-                        wr += words[x+y]
+                        wr += " "
+                        wr += mots[x+y]
                 wr_lo = wr.lower()
-                if wr_lo in author.textes[texte]:
-                    author.textes[texte][wr_lo] += 1
+### met le n gramme dans le dictionnaire
+                if wr_lo in auteur.textes[texte]:
+                    auteur.textes[texte][wr_lo] += 1
                 else:
-                    author.textes[texte][wr_lo] = 1
+                    auteur.textes[texte][wr_lo] = 1
 
-def textToDictFreq(pathTextInconnu, n=1):
+def textToDictFreq(pathTextInconnu, n):
     fichier = open(pathTextInconnu, encoding='utf-8')
     nbWord = 0
     wordsTextDict = dict()
@@ -129,6 +133,7 @@ def textToDictFreq(pathTextInconnu, n=1):
             else:
                 if not n == 1:
                         for y in range(1,n):
+                            wr += " "
                             wr += words[x + y]
                 nbWord += 1
                 wr_lo = wr.lower()
@@ -136,7 +141,6 @@ def textToDictFreq(pathTextInconnu, n=1):
                     wordsTextDict[wr_lo] += 1
                 else:
                     wordsTextDict[wr_lo] = 1
-
     for word in wordsTextDict:
         wordsTextDict[word] = wordsTextDict[word] / nbWord
 
@@ -154,7 +158,7 @@ def textCompare(textToCompareDictFreq, author):
             else:
                 nbMot += 1 * author.mFrequence[word]
     print('==========================================')
-    print("Auteur: " + author.name + ", ressemblance: ",coll/nbMot)
+    print("Auteur: " + author.name + ", ressemblance: ","%.2f%%" % (coll/nbMot*100))
     return coll/nbMot
 
 def addBucket(d,bucket,word):
@@ -168,7 +172,7 @@ def enleverPonc(word):
         word = word.replace(c, " ")
     return word
 
-def buildAuthorInfo(authors,rep_aut):
+def buildAuthorInfo(authors,rep_aut,n):
     authorsInfo = dict()
     for a in authors:
         authorsInfo[a] = Author(a)
@@ -179,7 +183,7 @@ def buildAuthorInfo(authors,rep_aut):
             textFile = authorDir + "\\" + d
             authorsInfo[a].addTexte(d)
             # buildGraph(textFile,args.m)
-            lectureFichier(textFile, authorsInfo[a], d)
+            lectureFichier(textFile, authorsInfo[a],d,n)
         authorsInfo[a].frequences()
     return authorsInfo
 
@@ -192,7 +196,6 @@ def auteurEtudier(auteur,fichier,n,F,rep_aut):
         objetAuteur.addTexte(d)
         lectureFichier(texteFile, objetAuteur, d)
     objetAuteur.frequences()
-
     texteFreq = textToDictFreq(fichier,n)
 
     textCompare(texteFreq,objetAuteur)
@@ -234,7 +237,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', required=True, help='Repertoire contenant les sous-repertoires des auteurs')
     parser.add_argument('-a', help='Auteur a traiter')
     parser.add_argument('-f', help='Fichier inconnu a comparer')
-    parser.add_argument('-m', required=True, type=int, choices=range(1, 2),
+    parser.add_argument('-m', required=True, type=int,
                         help='Mode (1 ou 2) - unigrammes ou digrammes')
     parser.add_argument('-F', type=int, help='Indication du rang (en frequence) du mot (ou bigramme) a imprimer')
     parser.add_argument('-G', type=int, help='Taille du texte a generer')
@@ -297,23 +300,5 @@ if __name__ == "__main__":
     if args.a:
         auteurEtudier(args.a, args.f,args.m,args.F,rep_aut)
     if args.A:
-        auteursInfo = buildAuthorInfo(authors,rep_aut)
+        auteursInfo = buildAuthorInfo(authors,rep_aut,args.m)
         ComparaisonAuteur(args.f,args.m,args.F,auteursInfo)
-
-
-
-
-    freqDict = dict()
-    allFreq = 0
-    for a in authors:
-       # freqDict[a] = textCompare(auteurEtudier, authorsInfo[a])
-        allFreq += freqDict[a]
-        #textCompare(textInDictFreq2, authorsInfo[a])
-    print("----------------------------------------------")
-    print("Victor Hugo - Les misérables - Tome I.txt -> ")
-    #print("Jules Verne - Vingt mille lieues sous les mers.txt -> ")
-    for a in freqDict:
-        print(f"Auteur: {a} {freqDict[a]/allFreq}")
-    print("----------------------------------------------")
-
-    print("done")

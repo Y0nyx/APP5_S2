@@ -153,6 +153,8 @@ def textCompare(textToCompareDictFreq, author):
                 nbMot += 1 * author.mFrequence[word]
             else:
                 nbMot += 1 * author.mFrequence[word]
+    print('==========================================')
+    print("Auteur: " + author.name + ", ressemblance: ",coll/nbMot)
     return coll/nbMot
 
 def addBucket(d,bucket,word):
@@ -166,26 +168,61 @@ def enleverPonc(word):
         word = word.replace(c, " ")
     return word
 
-def buildGraph(wordFile,n):
-    d = {}
-    g = Graph()
-    g.add_edge(1,2,1)
-    if (1,2) in g.get_edges():
-        g.add_edge(1,2,2)
+def buildAuthorInfo(authors,rep_aut):
+    authorsInfo = dict()
+    for a in authors:
+        authorsInfo[a] = Author(a)
+        authorDir = rep_aut + "\\" + a
+        textes = os.listdir(authorDir)
+        # loop pour tous les textes de l'auteur
+        for d in textes:
+            textFile = authorDir + "\\" + d
+            authorsInfo[a].addTexte(d)
+            # buildGraph(textFile,args.m)
+            lectureFichier(textFile, authorsInfo[a], d)
+        authorsInfo[a].frequences()
+    return authorsInfo
 
-    if (2,1) in g.get_edges():
-        g.add_edge(1,2,3)
-    wfile = open(wordFile, encoding='utf-8')
-    # create buckets of words that differ by one letter
-    for line in wfile:
-        words = line[:-1].split()
-        for wr in range(len(words) - 1):
-            wr_k = enleverPonc(words[wr].lower())
-            wr_values = (enleverPonc(words[wr+1]).lower())
-            g.add_edge(wr_k,wr_values, 2)
+def auteurEtudier(auteur,fichier,n,F,rep_aut):
+    objetAuteur = Author(auteur)
+    authorDir = rep_aut + "\\" + auteur
+    textes = os.listdir(authorDir)
+    for d in textes:
+        texteFile = authorDir + "\\" + d
+        objetAuteur.addTexte(d)
+        lectureFichier(texteFile, objetAuteur, d)
+    objetAuteur.frequences()
 
+    texteFreq = textToDictFreq(fichier,n)
 
-    return g
+    textCompare(texteFreq,objetAuteur)
+    if F:
+        meilleurFreq = dict()
+        Fword = findFword(objetAuteur,F,meilleurFreq)
+        print(F,"e mot le plus frequent :",Fword[0])
+
+def ComparaisonAuteur(fichier,n,F,auteursInfo):
+    texteFreq = textToDictFreq(fichier, n)
+    for auteur in auteursInfo:
+        textCompare(texteFreq, auteursInfo[auteur])
+        if F:
+            meilleurFreq = dict()
+            Fword = findFword(auteursInfo[auteur], F, meilleurFreq)
+            print(F, "e mot le plus frequent :", Fword[0])
+    return 0
+
+def findFword(objetAuteur,F,meilleurFreqDict,meilleurFreq=None):
+    if F == 0:
+        return meilleurFreq
+    if None != meilleurFreq and meilleurFreq[0] in meilleurFreqDict:
+        meilleurFreq = None
+    for freq in objetAuteur.mFrequence:
+        if meilleurFreq == None or objetAuteur.mFrequence[freq] > meilleurFreq[1]:
+            if freq not in meilleurFreqDict:
+                meilleurFreq = (freq,objetAuteur.mFrequence[freq])
+    F -= 1
+    meilleurFreqDict[meilleurFreq[0]] = meilleurFreq[1]
+    return findFword(objetAuteur,F, meilleurFreqDict,meilleurFreq)
 
 ### Main: lecture des paramÃ¨tres et appel des mÃ©thodes appropriÃ©es
 ###
@@ -204,6 +241,7 @@ if __name__ == "__main__":
     parser.add_argument('-g', help='Nom de base du fichier de texte a generer')
     parser.add_argument('-v', action='store_true', help='Mode verbose')
     parser.add_argument('-P', action='store_true', help='Retirer la ponctuation')
+    parser.add_argument('-A',action='store_true', help='Verifie touts les auteurs')
     args = parser.parse_args()
 
     ### Lecture du rÃ©pertoire des auteurs, obtenir la liste des auteurs
@@ -255,25 +293,20 @@ if __name__ == "__main__":
             print("    " + aut[-1])
 
 ### Ã€ partir d'ici, vous devriez inclure les appels Ã  votre code
-    authorsInfo = dict()
-    textInDictFreq = textToDictFreq("C:\\Users\\iamya\\Documents\\Github\\APP5_S2\\Victor Hugo - Les misérables - Tome I.txt")
-    textInDictFreq2 = textToDictFreq("C:\\Users\\iamya\\Documents\\Github\\APP5_S2\\Jules Verne - Vingt mille lieues sous les mers.txt")
-    for a in authors:
-        authorsInfo[a] = Author(a)
-        authorDir = rep_aut + "\\" + a
-        textes = os.listdir(authorDir)
-        # loop pour tous les textes de l'auteur
-        for d in textes:
-            textFile = authorDir + "\\" + d
-            authorsInfo[a].addTexte(d)
-            #buildGraph(textFile,args.m)
-            lectureFichier(textFile,authorsInfo[a],d)
-        authorsInfo[a].frequences()
+
+    if args.a:
+        auteurEtudier(args.a, args.f,args.m,args.F,rep_aut)
+    if args.A:
+        auteursInfo = buildAuthorInfo(authors,rep_aut)
+        ComparaisonAuteur(args.f,args.m,args.F,auteursInfo)
+
+
+
 
     freqDict = dict()
     allFreq = 0
     for a in authors:
-        freqDict[a] = textCompare(textInDictFreq, authorsInfo[a])
+       # freqDict[a] = textCompare(auteurEtudier, authorsInfo[a])
         allFreq += freqDict[a]
         #textCompare(textInDictFreq2, authorsInfo[a])
     print("----------------------------------------------")

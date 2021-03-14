@@ -89,7 +89,7 @@ class Author:
         for word in self.frequence:
             self.mFrequence[word] = self.frequence[word]/nbWord
 
-def lectureFichier(nomFichier,author,texte, n=1):
+def lectureFichier(nomFichier,author,texte, n):
     txt = open(nomFichier, encoding='utf-8').read()
     words = enleverPonc(txt.lower()).split()
     if n == 1:
@@ -105,9 +105,8 @@ def lectureFichier(nomFichier,author,texte, n=1):
             if not n == 1:
 ### Creer un string de n gramme
                 for y in range(1, n):
-                    wr += words[x+y]
                     wr += " "
-                    wr += mots[x+y]
+                    wr += words[x+y]
             wr_lo = wr.lower()
 ### met le n gramme dans le dictionnaire
             if wr_lo in author.textes[texte]:
@@ -130,23 +129,15 @@ def textToDictFreq(pathTextInconnu, n=1):
             pass
         else:
             if not n == 1:
-                for y in range(1, n):
+                for y in range(1,n):
+                    wr += " "
                     wr += words[x + y]
             nbWord += 1
             wr_lo = wr.lower()
             if wr_lo in wordsTextDict:
                 wordsTextDict[wr_lo] += 1
             else:
-                if not n == 1:
-                        for y in range(1,n):
-                            wr += " "
-                            wr += words[x + y]
-                nbWord += 1
-                wr_lo = wr.lower()
-                if wr_lo in wordsTextDict:
-                    wordsTextDict[wr_lo] += 1
-                else:
-                    wordsTextDict[wr_lo] = 1
+                wordsTextDict[wr_lo] = 1
     for word in wordsTextDict:
         wordsTextDict[word] = wordsTextDict[word] / nbWord
 
@@ -234,7 +225,7 @@ def auteurEtudier(auteur,fichier,n,F,rep_aut):
     for d in textes:
         texteFile = authorDir + "\\" + d
         objetAuteur.addTexte(d)
-        lectureFichier(texteFile, objetAuteur, d)
+        lectureFichier(texteFile, objetAuteur, d, n)
     objetAuteur.frequences()
     texteFreq = textToDictFreq(fichier,n)
 

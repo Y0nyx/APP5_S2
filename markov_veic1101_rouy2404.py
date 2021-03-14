@@ -54,6 +54,7 @@ import os
 from pathlib import Path
 from random import randint
 from random import choice
+import random
 from pythonds3 import Vertex
 from pythonds3.graphs import Graph
 
@@ -88,54 +89,50 @@ class Author:
         for word in self.frequence:
             self.mFrequence[word] = self.frequence[word]/nbWord
 
-
-
 def lectureFichier(nomFichier,author,texte, n=1):
-    fichier = open(nomFichier, encoding='utf-8')
-    for line in fichier:
-        words = enleverPonc(line[:-1]).split()
-        if n == 1:
-            loopRange = len(words)
+    txt = open(nomFichier, encoding='utf-8').read()
+    words = enleverPonc(txt.lower()).split()
+    if n == 1:
+        loopRange = len(words)
+    else:
+        loopRange = len(words) - (n-1)
+    for x in range(loopRange):
+        wr = words[x]
+        if len(wr) <= 2:
+            pass
         else:
-            loopRange = len(words) - (n-1)
-        for x in range(loopRange):
-            wr = words[x]
-            if len(wr) <= 2:
-                pass
+            if not n == 1:
+                for y in range(1, n):
+                    wr += words[x+y]
+            wr_lo = wr.lower()
+            if wr_lo in author.textes[texte]:
+                author.textes[texte][wr_lo] += 1
             else:
-                if not n == 1:
-                    for y in range(1, n):
-                        wr += words[x+y]
-                wr_lo = wr.lower()
-                if wr_lo in author.textes[texte]:
-                    author.textes[texte][wr_lo] += 1
-                else:
-                    author.textes[texte][wr_lo] = 1
+                author.textes[texte][wr_lo] = 1
 
 def textToDictFreq(pathTextInconnu, n=1):
-    fichier = open(pathTextInconnu, encoding='utf-8')
+    txt = open(pathTextInconnu, encoding='utf-8').read()
+    words = enleverPonc(txt.lower()).split()
     nbWord = 0
     wordsTextDict = dict()
-    for line in fichier:
-        words = enleverPonc(line[:-1]).split()
-        if n == 1:
-            loopRange = len(words)
+    if n == 1:
+        loopRange = len(words)
+    else:
+        loopRange = len(words) - (n-1)
+    for x in range(loopRange):
+        wr = words[x]
+        if len(wr) <= 2:
+            pass
         else:
-            loopRange = len(words) - (n-1)
-        for x in range(loopRange):
-            wr = words[x]
-            if len(wr) <= 2:
-                pass
+            if not n == 1:
+                for y in range(1, n):
+                    wr += words[x + y]
+            nbWord += 1
+            wr_lo = wr.lower()
+            if wr_lo in wordsTextDict:
+                wordsTextDict[wr_lo] += 1
             else:
-                if not n == 1:
-                        for y in range(1,n):
-                            wr += words[x + y]
-                nbWord += 1
-                wr_lo = wr.lower()
-                if wr_lo in wordsTextDict:
-                    wordsTextDict[wr_lo] += 1
-                else:
-                    wordsTextDict[wr_lo] = 1
+                wordsTextDict[wr_lo] = 1
 
     for word in wordsTextDict:
         wordsTextDict[word] = wordsTextDict[word] / nbWord
@@ -157,11 +154,45 @@ def textCompare(textToCompareDictFreq, author):
     print("Auteur: " + author.name + ", ressemblance: ",coll/nbMot)
     return coll/nbMot
 
-def addBucket(d,bucket,word):
-    if bucket in d:
-        d[bucket].append(word)
-    else:
-        d[bucket] = [word]
+def buildMarkovDict(nomAuteur, rep_aut):
+    authorDir = rep_aut + "\\" + nomAuteur
+    textes = os.listdir(authorDir)
+    dim1Dict = dict()
+    dim2Dict = dict()
+    # loop pour tous les textes de l'auteur
+    for d in textes:
+        textFile = authorDir + "\\" + d
+        txt = open(textFile, encoding='utf-8').read()
+        words = enleverPonc(txt.lower()).split()
+        for x in range(len(words)-1):
+            wr_current = words[x]
+            wr_next = words[x+1]
+            if wr_current in dim2Dict:
+                dim1Dict[wr_current] += 1
+                if wr_next in dim2Dict[wr_current]:
+                    dim2Dict[wr_current][wr_next] += 1
+                else:
+                    dim2Dict[wr_current][wr_next] = 1
+            else:
+                dim1Dict[wr_current] = 1
+                dim2Dict[wr_current] = {wr_next:1}
+    return (dim1Dict,dim2Dict)
+
+def buildPhrase(markovDict, length):
+    dim1Dict = markovDict[0]
+    dim2Dict = markovDict[1]
+    mylist = list(dim1Dict.keys())
+    myweights = list(dim1Dict.values())
+    words = list()
+    word = random.choices(mylist, weights=myweights, k=1)[0]
+    for x in range(length - 1):
+        word = dim2Dict[word]
+        mylist = list(word.keys())
+        myweights = list(word.values())
+        word = random.choices(mylist, weights=myweights, k=1)[0]
+        words.append(word)
+    for word in words:
+        print(word, end=" ")
 
 def enleverPonc(word):
     for c in PONC:
@@ -300,20 +331,18 @@ if __name__ == "__main__":
         auteursInfo = buildAuthorInfo(authors,rep_aut)
         ComparaisonAuteur(args.f,args.m,args.F,auteursInfo)
 
+    if args.G:
+        print("markov chain")
+        if args.a:
+            markovDictAuteur = buildMarkovDict(args.a, rep_aut)
+            print(f"Text selon l'auteur {args.a}:")
+            buildPhrase(markovDictAuteur, args.G)
+        elif args.A:
+            for a in authors:
+                markovDictAuteur = buildMarkovDict(a, rep_aut)
+                print(f"{a} :: Début :", end="")
+                buildPhrase(markovDictAuteur, args.G)
+                print(f" :: Fin")
 
-
-
-    freqDict = dict()
-    allFreq = 0
-    for a in authors:
-       # freqDict[a] = textCompare(auteurEtudier, authorsInfo[a])
-        allFreq += freqDict[a]
-        #textCompare(textInDictFreq2, authorsInfo[a])
-    print("----------------------------------------------")
-    print("Victor Hugo - Les misérables - Tome I.txt -> ")
-    #print("Jules Verne - Vingt mille lieues sous les mers.txt -> ")
-    for a in freqDict:
-        print(f"Auteur: {a} {freqDict[a]/allFreq}")
-    print("----------------------------------------------")
 
     print("done")

@@ -102,7 +102,7 @@ def lectureFichier(nomFichier,author,texte, n, ponc):
     for x in range(loopRange):
         wr = words[x]
 ### enlever les determinants non representatif de la trace de l'auteur
-        if len(wr) <= 2:
+        if len(wr) <= 0:
             pass
         else:
             if not n == 1:
@@ -238,7 +238,7 @@ def auteurEtudier(auteur,fichier,n,F,rep_aut, ponc):
     if F:
         meilleurFreq = dict()
         Fword = findFword(objetAuteur,F,meilleurFreq)
-        print(F,"e mot le plus frequent :",Fword[0])
+        print(F, "e n-gramme le plus frequent est (", Fword[0],") chez ",auteur)
 
 def ComparaisonAuteur(fichier,n,F,auteursInfo):
     texteFreq = textToDictFreq(fichier, n)
@@ -332,13 +332,18 @@ if __name__ == "__main__":
             print("    " + aut[-1])
 
 ### Ã€ partir d'ici, vous devriez inclure les appels Ã  votre code
-
-    if args.a:
-        auteurEtudier(args.a, args.f,args.m,args.F,rep_aut, args.P)
-    if args.A:
-        auteursInfo = buildAuthorInfo(authors,rep_aut,args.m, args.P)
-        ComparaisonAuteur(args.f,args.m,args.F,auteursInfo)
-
+    if args.f:
+        if args.a:
+            auteurEtudier(args.a, args.f,args.m,args.F,rep_aut, args.P)
+        if args.A:
+            auteursInfo = buildAuthorInfo(authors,rep_aut,args.m, args.P)
+            ComparaisonAuteur(args.f,args.m,args.F,auteursInfo)
+    else:
+        objectAuteur = buildAuthorInfo(authors,rep_aut,args.m,args.P)
+        meilleurFreq = dict()
+        for a in objectAuteur:
+            Fword = findFword(objectAuteur[a],args.F,meilleurFreq)
+            print(args.F, "e n-gramme le plus frequent est (", Fword[0],") chez ",a)
     if args.G:
         print("markov chain")
         if args.a:

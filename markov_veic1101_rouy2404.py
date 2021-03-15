@@ -152,13 +152,12 @@ def textCompare(textToCompareDictFreq, author):
     for word in textToCompareDictFreq.keys():
         if word in author.mFrequence:
 ### comparer la frequence
-            if author.mFrequence[word]/textToCompareDictFreq[word] > 0.75:
+            if textToCompareDictFreq[word]/author.mFrequence[word] > 0.75:
                 coll += 1 * author.mFrequence[word]
                 nbMot += 1 * author.mFrequence[word]
             else:
                 nbMot += 1 * author.mFrequence[word]
     print('==========================================')
-    #print("Auteur: " + author.name + ", ressemblance: ", "%.2f%%" % (coll / nbMot * 100))
     print("Auteur: " + author.name + ", ressemblance: ","%.2f%%" % (coll/nbMot*100))
 
 def buildMarkovDict(nomAuteur, rep_aut, ponc):

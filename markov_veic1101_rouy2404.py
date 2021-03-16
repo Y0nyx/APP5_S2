@@ -102,7 +102,7 @@ def lectureFichier(nomFichier,author,texte, n, ponc):
     for x in range(loopRange):
         wr = words[x]
 ### enlever les determinants non representatif de la trace de l'auteur
-        if len(wr) <= 0:
+        if len(wr) <= 2:
             pass
         else:
             if not n == 1:
@@ -240,6 +240,20 @@ def auteurEtudier(auteur,fichier,n,F,rep_aut, ponc):
         Fword = findFword(objetAuteur,F,meilleurFreq)
         print(F, "e n-gramme le plus frequent est (", Fword[0],") chez ",auteur)
 
+def FauteurSeul(auteur,rep_aut,n,F,ponc):
+
+    objetAuteur = Author(auteur)
+    authorDir = rep_aut + "\\" + auteur
+    textes = os.listdir(authorDir)
+    for d in textes:
+        texteFile = authorDir + "\\" + d
+        objetAuteur.addTexte(d)
+    lectureFichier(texteFile,objetAuteur,d,n,ponc)
+    objetAuteur.frequences()
+    meilleurFreq = dict()
+    Fword = findFword(objetAuteur, F, meilleurFreq)
+    print(F, "e n-gramme le plus frequent est (", Fword[0], ") chez ", auteur)
+
 def ComparaisonAuteur(fichier,n,F,auteursInfo):
     texteFreq = textToDictFreq(fichier, n)
     for auteur in auteursInfo:
@@ -339,11 +353,15 @@ if __name__ == "__main__":
             auteursInfo = buildAuthorInfo(authors,rep_aut,args.m, args.P)
             ComparaisonAuteur(args.f,args.m,args.F,auteursInfo)
     else:
-        objectAuteur = buildAuthorInfo(authors,rep_aut,args.m,args.P)
-        meilleurFreq = dict()
-        for a in objectAuteur:
-            Fword = findFword(objectAuteur[a],args.F,meilleurFreq)
-            print(args.F, "e n-gramme le plus frequent est (", Fword[0],") chez ",a)
+        if args.A:
+            objectAuteur = buildAuthorInfo(authors,rep_aut,args.m,args.P)
+            meilleurFreq = dict()
+            for a in objectAuteur:
+                Fword = findFword(objectAuteur[a],args.F,meilleurFreq)
+                print(args.F, "e n-gramme le plus frequent est (", Fword[0],") chez ",a)
+        else:
+            FauteurSeul(args.a,rep_aut,args.m,args.F,args.P)
+
     if args.G:
         print("markov chain")
         if args.a:

@@ -147,18 +147,17 @@ def textToDictFreq(pathTextInconnu, n=1):
     return wordsTextDict
 
 def textCompare(textToCompareDictFreq, author):
-    coll = 0
-    nbMot = 0
+    sum = 0
     for word in textToCompareDictFreq.keys():
-        if word in author.mFrequence:
 ### comparer la frequence
-            if textToCompareDictFreq[word]/author.mFrequence[word] > 0.75:
-                coll += 1 * author.mFrequence[word]
-                nbMot += 1 * author.mFrequence[word]
-            else:
-                nbMot += 1 * author.mFrequence[word]
+        if word in author.mFrequence:
+            sum += (author.mFrequence[word] - textToCompareDictFreq[word])**2
+        else:
+            sum += textToCompareDictFreq[word]**2
+    coteAuteur = math.sqrt(sum)
     print('==========================================')
-    print("Auteur: " + author.name + ", ressemblance: ","%.2f%%" % (coll/nbMot*100))
+    print("Auteur: " + author.name + ", distance: ", coteAuteur)
+    return coteAuteur
 
 def buildMarkovDict(nomAuteur, rep_aut, ponc,n):
     authorDir = rep_aut + "\\" + nomAuteur
@@ -227,7 +226,6 @@ def buildAuthorInfo(authors,rep_aut,n, ponc):
         for d in textes:
             textFile = authorDir + "\\" + d
             authorsInfo[a].addTexte(d)
-            # buildGraph(textFile,args.m)
             lectureFichier(textFile, authorsInfo[a],d,n, ponc)
         authorsInfo[a].frequences()
     return authorsInfo
@@ -242,7 +240,6 @@ def auteurEtudier(auteur,fichier,n,F,rep_aut, ponc):
         lectureFichier(texteFile, objetAuteur, d, n, ponc)
     objetAuteur.frequences()
     texteFreq = textToDictFreq(fichier,n)
-
     textCompare(texteFreq,objetAuteur)
     if F:
         meilleurFreq = dict()
@@ -250,7 +247,6 @@ def auteurEtudier(auteur,fichier,n,F,rep_aut, ponc):
         print(F, "e n-gramme le plus frequent est (", Fword[0],") chez ",auteur)
 
 def FauteurSeul(auteur,rep_aut,n,F,ponc):
-
     objetAuteur = Author(auteur)
     authorDir = rep_aut + "\\" + auteur
     textes = os.listdir(authorDir)
@@ -367,7 +363,7 @@ if __name__ == "__main__":
             meilleurFreq = dict()
             for a in objectAuteur:
                 Fword = findFword(objectAuteur[a],args.F,meilleurFreq)
-                print(args.F, "e n-gramme le plus frequent est (", Fword[0],") chez ",a)
+                print(f"{args.F} e n-gramme le plus frequent est ({Fword[0]}) chez {a}")
         elif args.F:
             FauteurSeul(args.a,rep_aut,args.m,args.F,args.P)
 

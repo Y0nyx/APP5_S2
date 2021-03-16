@@ -160,7 +160,7 @@ def textCompare(textToCompareDictFreq, author):
     print('==========================================')
     print("Auteur: " + author.name + ", ressemblance: ","%.2f%%" % (coll/nbMot*100))
 
-def buildMarkovDict(nomAuteur, rep_aut, ponc):
+def buildMarkovDict(nomAuteur, rep_aut, ponc,n):
     authorDir = rep_aut + "\\" + nomAuteur
     textes = os.listdir(authorDir)
     dim1Dict = dict()
@@ -173,9 +173,18 @@ def buildMarkovDict(nomAuteur, rep_aut, ponc):
             words = enleverPonc(txt.lower()).split()
         else:
             words = txt.lower().split()
-        for x in range(len(words)-1):
+        for x in range(len(words)-2*n):
+            first_wr = words[x]
             wr_current = words[x]
             wr_next = words[x+1]
+            if not n == 1:
+                for y in range(1,n):
+                    wr_current += " "
+                    wr_current += words[x + y]
+            if not n == 1:
+                for y in range(1,n):
+                    wr_next += " "
+                    wr_next += words[x + y + 1]
             if wr_current in dim2Dict:
                 dim1Dict[wr_current] += 1
                 if wr_next in dim2Dict[wr_current]:
@@ -187,7 +196,7 @@ def buildMarkovDict(nomAuteur, rep_aut, ponc):
                 dim2Dict[wr_current] = {wr_next:1}
     return (dim1Dict,dim2Dict)
 
-def buildPhrase(markovDict, length):
+def buildPhrase(markovDict, length, n):
     dim1Dict = markovDict[0]
     dim2Dict = markovDict[1]
     mylist = list(dim1Dict.keys())
@@ -199,7 +208,7 @@ def buildPhrase(markovDict, length):
         mylist = list(word.keys())
         myweights = list(word.values())
         word = random.choices(mylist, weights=myweights, k=1)[0]
-        words.append(word)
+        words.append(word.split()[-1])
     for word in words:
         print(word, end=" ")
 
@@ -365,14 +374,14 @@ if __name__ == "__main__":
     if args.G:
         print("markov chain")
         if args.a:
-            markovDictAuteur = buildMarkovDict(args.a, rep_aut, args.P)
+            markovDictAuteur = buildMarkovDict(args.a, rep_aut, args.P, args.m)
             print(f"Text selon l'auteur {args.a}:")
-            buildPhrase(markovDictAuteur, args.G)
+            buildPhrase(markovDictAuteur, args.G, args.m)
         elif args.A:
             for a in authors:
-                markovDictAuteur = buildMarkovDict(a, rep_aut, args.P)
+                markovDictAuteur = buildMarkovDict(a, rep_aut, args.P, args.m)
                 print(f"{a} :: Début :", end="")
-                buildPhrase(markovDictAuteur, args.G)
+                buildPhrase(markovDictAuteur, args.G, args.m)
                 print(f" :: Fin")
 
 

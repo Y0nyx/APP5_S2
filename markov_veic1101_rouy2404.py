@@ -353,13 +353,13 @@ if __name__ == "__main__":
             auteursInfo = buildAuthorInfo(authors,rep_aut,args.m, args.P)
             ComparaisonAuteur(args.f,args.m,args.F,auteursInfo)
     else:
-        if args.A:
+        if args.A and args.F:
             objectAuteur = buildAuthorInfo(authors,rep_aut,args.m,args.P)
             meilleurFreq = dict()
             for a in objectAuteur:
                 Fword = findFword(objectAuteur[a],args.F,meilleurFreq)
                 print(args.F, "e n-gramme le plus frequent est (", Fword[0],") chez ",a)
-        else:
+        elif args.F:
             FauteurSeul(args.a,rep_aut,args.m,args.F,args.P)
 
     if args.G:
